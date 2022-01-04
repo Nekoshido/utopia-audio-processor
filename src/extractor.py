@@ -1,11 +1,10 @@
 import librosa
 import glob
-import yaml
+from yaml import safe_load, YAMLError
 from pathlib import Path
 
 import numpy
 
-from typing import Optional, Any
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 
@@ -18,32 +17,42 @@ class Extractor:
 
     @staticmethod
     def _yaml_reader(path: str):
-        return yaml.load(path)
+        with open(path, "r") as stream:
+            try:
+                return safe_load(stream)
+            except YAMLError as exc:
+                print(exc)
 
-    def feature_extractor(self, audio_array: numpy.ndarray, sampling_rate: int,
-                          spectrogram: Optional[Any], n_mfcc: Optional[Any], dct_type: Optional[Any],
-                          norm: Optional[Any], lifter: Optional[Any], n_fft: Optional[Any],
-                          hop_length: Optional[Any], win_length: Optional[Any],
-                          window: Optional[Any], center: Optional[bool], pad_mode: Optional[str],
-                          power: Optional[Any]) -> numpy.ndarray:
-        if self.feature_type == 'mfcc':
-            return librosa.feature.mfcc(y=audio_array, sr=sampling_rate, S=spectrogram, n_mfcc=n_mfcc,
-                                        dct_type=dct_type, norm=norm, lifter=lifter)
-        elif self.feature_type == 'melspectrogram':
-            return librosa.feature.melspectrogram(y=audio_array, sr=sampling_rate, n_fft=n_fft,
-                                                  hop_length=hop_length, win_length=win_length,
-                                                  window=window, center=center, pad_mode=pad_mode,
-                                                  power=power)
+    def feature_extractor(self, audio_array: numpy.ndarray, sampling_rate: int) -> numpy.ndarray:
+        if self.feature_type['name'] == 'mfcc':
+            return librosa.feature.mfcc(y=audio_array, sr=sampling_rate,
+                                        S=self.feature_type.get('spectrogram', None),
+                                        n_mfcc=self.feature_type.get('n_mfcc', 20),
+                                        dct_type=self.feature_type.get('dct_type', 2),
+                                        norm=self.feature_type.get('norm', 'ortho'),
+                                        lifter=self.feature_type.get('lifter', 0))
+        elif self.feature_type['name'] == 'melspectrogram':
+            return librosa.feature.melspectrogram(y=audio_array, sr=sampling_rate,
+                                                  S=self.feature_type.get('spectrogram', None),
+                                                  n_fft=self.feature_type.get('n_fft', 2048),
+                                                  hop_length=self.feature_type.get('hop_length', 512),
+                                                  win_length=self.feature_type.get('win_length', None),
+                                                  window=self.feature_type.get('window', 'hann'),
+                                                  center=self.feature_type.get('center', True),
+                                                  pad_mode=self.feature_type.get('pad_mode', 'reflect'),
+                                                  power=self.feature_type.get('power', 2.0))
 
     def normalization(self, dataset: numpy.ndarray) -> numpy.ndarray:
-        if self.normalization_type == 'MinMax':
+        if self.normalization_type['name'] == 'MinMax':
             return MinMaxScaler().fit_transform(dataset)
-        elif self.normalization_type == 'Standard':
+        elif self.normalization_type['name'] == 'Standard':
             return StandardScaler().fit_transform(dataset)
 
-    def run(self, config_file_path: str):
+    def run(self):
         audio_path = f'{Path(__file__).parents[1]}\data'
-        extractor = Extractor(config_file_path)
+        print(self.normalization_type)
+        print(self.feature_type)
         for filename in glob.iglob(audio_path + '**/**', recursive=True):
             if filename.endswith('.wav'):
                 y, sr = librosa.load(filename)
+
