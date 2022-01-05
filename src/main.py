@@ -7,6 +7,7 @@ if __name__ == "__main__":
     parser.add_argument('--config', dest='config_file', help='Config File', default="extractor.yaml",
                         required=True)
     args = parser.parse_args()
-    extractor = Extractor()
-    extractor.run(args.config_file)
+    # extractor = Extractor(f"{Path(__file__).parents[1]}/test/test.yaml")
+    extractor = Extractor(args.config_file)
+    extractor.run()
     print("FINISHED!!")

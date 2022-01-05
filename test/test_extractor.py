@@ -1,7 +1,17 @@
-from pathlib import Path
+from setuptools import find_packages
 
 from src.extractor import Extractor
+from unittest import TestCase
 
-extractor = Extractor(f"{Path(__file__).parents[1]}/test/test.yaml")
-print(extractor.feature_type)
-print(extractor.normalization_type)
+
+class ExctractorTest(TestCase):
+    extractor = Extractor()
+
+    def test_normalize_unicode_to_ascii(self):
+        input_string = "Mickæël"
+        expected = 'mickel'
+
+        real = self.file_processer._normalize_unicode_to_ascii(input_string)
+        assert real == expected
+
+

@@ -1,3 +1,5 @@
+load_folder: C:\Users\Hecto\PycharmProjects\utopia-audio-processor\data
+save_folder: C:\Users\Hecto\PycharmProjects\utopia-audio-processor\result
 feature:
   name: melspectrogram
   n_fft: 2048
@@ -9,4 +11,4 @@ feature:
   power: 2.0
 
 normalization:
-  name: MinMax
+  name: minmaxnormalizer
