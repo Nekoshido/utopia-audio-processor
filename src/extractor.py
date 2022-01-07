@@ -1,4 +1,5 @@
 import os
+from sys import platform
 
 import librosa
 import glob
@@ -18,6 +19,7 @@ class Extractor:
         self.save_folder = config_dict['save_folder']
         self.feature_type = config_dict['feature']
         self.normalization_type = config_dict['normalization']
+        self.spacing_bar = self._initialize_spacing_bar()
 
     @staticmethod
     def _yaml_reader(path: str):
@@ -28,14 +30,17 @@ class Extractor:
                 print(exc)
 
     @staticmethod
-    def store_data(norm_array: ndarray, file_path: str, file_name: str):
+    def _initialize_spacing_bar() -> str:
+        return r'\\' if platform == 'Windows' else "/"
+
+    def store_data(self, norm_array: ndarray, file_path: str, file_name: str):
         if not os.path.exists(file_path):
             os.makedirs(file_path)
-        path_destination = file_path + r'\\' + file_name
+        path_destination = file_path + self.spacing_bar + file_name
         return save(path_destination, norm_array)
 
     def feature_extractor(self, audio_array: ndarray, sampling_rate: int) -> ndarray:
-        if self.feature_type['name'] == 'mfcc':
+        if self.feature_type['name'] == 'mfccs':
             return librosa.feature.mfcc(y=audio_array, sr=sampling_rate,
                                         S=self.feature_type.get('feature.spectrogram', None),
                                         n_mfcc=self.feature_type.get('feature.n_mfcc', 20),
@@ -56,17 +61,21 @@ class Extractor:
     def normalization(self, dataset: ndarray) -> ndarray:
         if self.normalization_type['name'] == 'minmaxnormalizer':
             return MinMaxScaler().fit_transform(dataset)
-        elif self.normalization_type['name'] == 'standardcaler':
+        elif self.normalization_type['name'] == 'standardscaler':
             return StandardScaler().fit_transform(dataset)
 
     def run(self):
-        audio_path = f'{Path(__file__).parents[1]}\data'
+        print("STARTING RUN")
+        audio_path = f'{Path(__file__).parents[1]}{self.spacing_bar}data'
+        print(audio_path)
         for filename in glob.iglob(audio_path + '**/**', recursive=True):
             if filename.endswith('.wav'):
                 file_path = os.path.split(filename)
+                print(filename)
                 audio_file_name = file_path[1].replace('wav', 'npy')
-                audio_folders = r'\\'.join(file_path[0].split("\\")[-2:])
-                path_destination = self.save_folder + audio_folders
+                audio_folders = self.spacing_bar.join(file_path[0].split(self.spacing_bar)[-2:])
+                path_destination = self.save_folder + self.spacing_bar + audio_folders
+                print(path_destination)
                 y, sr = librosa.load(filename)
                 feature_extractor = self.feature_extractor(y, sr)
                 normalization = self.normalization(feature_extractor)
