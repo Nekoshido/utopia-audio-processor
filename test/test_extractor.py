@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from numpy import array, ndarray, testing
+from numpy import testing
 
 from src.extractor import Extractor
 from unittest import TestCase

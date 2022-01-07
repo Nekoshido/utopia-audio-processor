@@ -1,10 +1,10 @@
 import os
 from sys import platform
+from typing import Tuple
 
 import librosa
 import glob
 from yaml import safe_load, YAMLError
-from pathlib import Path
 
 from numpy import ndarray, save
 
@@ -33,7 +33,7 @@ class Extractor:
     def _initialize_spacing_bar() -> str:
         return r'\\' if platform == 'Windows' else "/"
 
-    def store_data(self, norm_array: ndarray, file_path: str, file_name: str):
+    def _store_data(self, norm_array: ndarray, file_path: str, file_name: str):
         if not os.path.exists(file_path):
             os.makedirs(file_path)
         path_destination = file_path + self.spacing_bar + file_name
@@ -64,20 +64,21 @@ class Extractor:
         elif self.normalization_type['name'] == 'standardscaler':
             return StandardScaler().fit_transform(dataset)
 
-    def run(self):
-        print("STARTING RUN")
-        audio_path = f'{Path(__file__).parents[1]}{self.spacing_bar}data'
-        print(audio_path)
-        for filename in glob.iglob(audio_path + '**/**', recursive=True):
-            if filename.endswith('.wav'):
-                file_path = os.path.split(filename)
-                print(filename)
-                audio_file_name = file_path[1].replace('wav', 'npy')
-                audio_folders = self.spacing_bar.join(file_path[0].split(self.spacing_bar)[-2:])
-                path_destination = self.save_folder + self.spacing_bar + audio_folders
-                print(path_destination)
-                y, sr = librosa.load(filename)
-                feature_extractor = self.feature_extractor(y, sr)
-                normalization = self.normalization(feature_extractor)
-                self.store_data(normalization, path_destination, audio_file_name)
+    def _destination_names(self, filename:str) -> Tuple:
+        file_path = os.path.split(filename)
+        audio_file_name = f"{file_path[1].replace('.wav', '')}_{self.feature_type['name']}_{self.normalization_type['name']}.npy"
+        audio_folders = self.spacing_bar.join(file_path[0].split(self.spacing_bar)[-2:])
+        path_destination = self.save_folder + self.spacing_bar + audio_folders
+        return audio_file_name, path_destination
 
+    def _run_extractor_by_filename(self, filename: str) -> ndarray:
+        y, sr = librosa.load(filename)
+        feature_extractor = self.feature_extractor(y, sr)
+        return self.normalization(feature_extractor)
+
+    def run(self):
+        for filename in glob.iglob(self.load_folder + '**/**', recursive=True):
+            if filename.endswith('.wav'):
+                normalization = self._run_extractor_by_filename(filename)
+                audio_file_name, path_destination = self._destination_names(filename)
+                self._store_data(normalization, path_destination, audio_file_name)
