@@ -1,0 +1,10 @@
+load_folder: /utopia-audio-processor/data
+save_folder: /utopia-audio-processor/result
+feature:
+  name: mfccs
+  n_mfcc: 20
+  dct_type: 2
+  norm: ortho
+  lifter: 0
+normalization:
+  name: standardscaler

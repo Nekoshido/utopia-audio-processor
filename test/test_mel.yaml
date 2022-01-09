@@ -1,0 +1,14 @@
+load_folder: /utopia-audio-processor/data
+save_folder: /utopia-audio-processor/result
+feature:
+  name: melspectrogram
+  n_fft: 2048
+  hop_length: 512
+  win_length: None
+  window: hann
+  center: True
+  pad_mode: reflect
+  power: 2.0
+
+normalization:
+  name: minmaxnormalizer
