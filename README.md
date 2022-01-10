@@ -69,5 +69,5 @@ For running the application is only necessary to create a yaml with all the conf
 Is also possible to install the code as a library by running
 
 ```
-pip install .
+pip3 install .
 ```
